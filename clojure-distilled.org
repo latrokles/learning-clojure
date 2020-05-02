@@ -1,0 +1,163 @@
+#+STARTUP: indent
+
+* [[https://yogthos.net/ClojureDistilled.html][Clojure Distilled]]
+:PROPERTIES:
+:header-args: clojure :results output value pp
+:END:
+
+** the core
+*** data types
+- vars: mutable storage location, can be rebound per-thread
+- booleans: true and false, nil values are falsey
+- numbers: ints, floats, doubles, fractions
+- symbols: variable identifiers
+- keywords: like ruby :symbols
+- chars: what they sound like, but represented differently. e.g. \a
+- regexes: strings that start with a hash
+
+Also a literal notation for collections
+
+- list: '(1 2 3)
+- vector: [1 2 3]
+- map: {:foo "a" :bar "b"}
+- set: #{"a" "b" "c"}
+
+clojure programming is a lot about manipulating data structures, even
+the logic uses data structures. code == data (homoiconicity I think this is called?)
+
+*** special forms
+primitives that define the language, in clojure this is a small set (I believe the
+rest is done using macros and composing s forms).
+
+**** functions
+***** function calls
+- function call are lists containing function name and params, like so:
+
+#+BEGIN_SRC clojure
+(list 1 2 3)
+#+END_SRC
+
+#+RESULTS:
+| 1 | 2 | 3 |
+
+***** anonymous functions (lambdas)
+- anonymous functions are functions not bound to a name (lambdas), they are defined the keyword /fn/
+#+begin_src clojure 
+((fn [arg] (println arg)) "hello")
+#+end_src
+
+#+RESULTS:
+: hello
+: nil
+
+- there is a shorthand for lambdas, prepending the definition with a /#/
+#+begin_src clojure
+;; for a single argument
+#(println %)
+
+;; or for multiple arguments
+#(println %1 %2 %3)
+#+end_src
+
+#+RESULTS:
+: #function[user/eval5792/fn--5795]
+
+***** named functions
+- a named function is an /fn/ bound to a symbol
+
+#+begin_src clojure
+(def double
+  (fn [x] (* 2 x)))
+
+(double 4)
+#+end_src
+
+#+RESULTS:
+: 8
+
+- there is a shorthand for this as well, the /defn/
+#+begin_src clojure
+(defn square [x] (* x x))
+
+(square 2)
+#+end_src
+
+#+RESULTS:
+: 4
+
+- expressions are evaluated inside out
+- the return value of a function is the result of evaluating the last expression in the function
+- the clojure compiler is a single pass compiler, so functions must be defined before they are called.
+
+#+begin_src clojure
+(plusOne 1)
+
+(defn plusOne [x] (+ 1 x))
+#+end_src
+
+#+RESULTS:
+: class clojure.lang.Compiler$CompilerExceptionclass clojure.lang.Compiler$CompilerExceptionSyntax error compiling at (*cider-repl learning/learning-clojure:localhost:52784(clj)*:1:28).
+: Unable to resolve symbol: plusOne in this context
+
+- but you can provide a forward declaration (like in C) using the /declare/ macro
+#+begin_src clojure
+(declare plusOne)
+
+(defn plusTwo [x] (plusOne (plusOne x)))
+
+(plusTwo 1)
+#+end_src
+
+#+RESULTS:
+: class java.lang.IllegalStateExceptionclass java.lang.IllegalStateExceptionExecution error (IllegalStateException) at user/eval5819$plusTwo (REPL:3).
+: Attempting to call unbound fn: #'user/plusOne
+
+#+begin_src clojure
+(declare plusOne)
+
+(plusOne 1)
+
+(defn plusOne [x] (+ 1 x))
+#+end_src
+
+#+RESULTS:
+: class java.lang.IllegalStateExceptionclass java.lang.IllegalStateExceptionExecution error (IllegalStateException) at user/eval5815 (REPL:3).
+: Attempting to call unbound fn: #'user/plusOne
+
+- as we see above, doesn't seem to work that well on the repl though.
+
+- function structure is the language AST (is it really?), which is why some of the more dynamic properties of the language are relatively easier.
+
+
+
+
+***** higher order functions
+- functions can take other functions as parameters
+#+begin_src clojure
+;; map is the quintisenial example of this, it takes two arguments:
+;; 1. a function 
+;; 2. a colection of elements on which the funtion is applied
+;; 
+;; and returns a collection resulting from applying the function to the elements of the collection passed in
+;;
+;; * the lambda below multiplies its argument with itself
+(map #(* % %) [1 2 3 4 5])
+
+#+end_src
+
+#+RESULTS:
+: (1 4 9 16 25)
+
+- we can even nest/chain them together
+#+begin_src clojure
+(filter even?
+  (map #(* 3 %) [1 2 3 4 5]))
+#+end_src
+
+#+RESULTS:
+: (6 12)
+
+***** closures
+- functions that return other functions as their result
+  [isn't this just higher order functions, isn't the notion of a closure more involved than that
+   in that the main idea is that the returned function carries a bound context with it]
