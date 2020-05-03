@@ -161,3 +161,48 @@ rest is done using macros and composing s forms).
 - functions that return other functions as their result
   [isn't this just higher order functions, isn't the notion of a closure more involved than that
    in that the main idea is that the returned function carries a bound context with it]
+  
+#+begin_src clojure
+(defn greeting [greeting-message]
+  (fn [guest-name]
+    (println greeting-message guest-name)))
+
+(let [greet (greeting "Welcome to Clojure")]
+  (greet "Gumersindo")
+  (greet "Kiko"))
+#+end_src
+
+#+RESULTS:
+: Welcome to Clojure Gumersindo
+: Welcome to Clojure Kiko
+: nil
+
+- /let/ is used above to bind the function returned by greeting to the symbol /greet/, similar to
+  variable declaration in imperative languages (...?)
+
+***** threading [weaving] expressions
+
+- clojure provides a more conveninent way to handle nested expressions so they don't become too difficult to read
+
+#+begin_src clojure
+(reduce + (interpose 5 (map inc (range 10))))
+
+;; can be re-written as
+(->> (range 10) (map inc) (interpose 5) (reduce +))
+#+end_src
+
+#+RESULTS:
+: 100
+
+- the /->>/ operator passes the result of each expression as the last argument of the next
+- the /->/ operator passes the result of each expression as the first argument of the next
+  
+***** laziness
+- clojure uses laziness quite a bit [I thought it was only in sequences...]
+
+**** code structure 
+- immutability preferred, enforced for the most part
+- chain functions together (either through nesting or using /->/)
+- functions return values, do not mutate state (unless it's made explicit?)
+
+***** destructuring
