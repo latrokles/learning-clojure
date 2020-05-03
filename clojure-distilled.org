@@ -206,3 +206,68 @@ rest is done using macros and composing s forms).
 - functions return values, do not mutate state (unless it's made explicit?)
 
 ***** destructuring
+- a declarative way to access values in data structures
+
+#+begin_src clojure
+(defn print-user [[name address phone]]
+  (println name "-" address phone))
+  
+;; the values of the list passed into print-user are automatically
+;; assigned to the destructuring symbols in the fn definition
+(print-user ["bob" "some address" "some phone"])
+#+end_src
+
+#+RESULTS:
+: bob - some address some phone
+: nil
+
+- can also specify them variable arguments as a sequence
+#+begin_src clojure
+(defn print-args [& args]
+  (println args))
+
+(print-args "a" "b" "c")
+#+end_src
+
+#+RESULTS:
+: (a b c)
+: nil
+
+#+begin_src clojure
+(defn print-args [arg1 & [arg2]]
+  (println
+    (if arg2
+      "got two arguments"
+      "got one argument")))
+
+(print-args "bar" "baz")
+(print-args "bar")
+#+end_src
+
+#+RESULTS:
+: got two arguments
+: got one argument
+: nil
+
+- can also destructure maps, where the local binding names point to the map keys
+#+begin_src clojure
+(let [{[a b c] :items id :id} {:id "foo" :items [1 2 3]}]
+  (println id "->" a b c))
+#+end_src
+
+#+RESULTS:
+: foo -> 1 2 3
+: nil
+
+- the above destructuring is very common, so again, we get some convenience operations to do it
+  in a simpler way
+
+#+begin_src clojure
+(defn login [{:keys [user pass]}]
+  (and (= user "bob") (= pass "secret")))
+
+(login {:user "bob" :pass "secret"})
+#+end_src
+
+#+RESULTS:
+: true
