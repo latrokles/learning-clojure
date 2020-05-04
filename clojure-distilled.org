@@ -29,8 +29,8 @@ the logic uses data structures. code == data (homoiconicity I think this is call
 primitives that define the language, in clojure this is a small set (I believe the
 rest is done using macros and composing s forms).
 
-**** functions
-***** function calls
+** functions
+*** function calls
 - function call are lists containing function name and params, like so:
 
 #+BEGIN_SRC clojure
@@ -40,7 +40,7 @@ rest is done using macros and composing s forms).
 #+RESULTS:
 | 1 | 2 | 3 |
 
-***** anonymous functions (lambdas)
+*** anonymous functions (lambdas)
 - anonymous functions are functions not bound to a name (lambdas), they are defined the keyword /fn/
 #+begin_src clojure 
 ((fn [arg] (println arg)) "hello")
@@ -62,7 +62,7 @@ rest is done using macros and composing s forms).
 #+RESULTS:
 : #function[user/eval5792/fn--5795]
 
-***** named functions
+*** named functions
 - a named function is an /fn/ bound to a symbol
 
 #+begin_src clojure
@@ -130,8 +130,7 @@ rest is done using macros and composing s forms).
 
 
 
-
-***** higher order functions
+*** higher order functions
 - functions can take other functions as parameters
 #+begin_src clojure
 ;; map is the quintisenial example of this, it takes two arguments:
@@ -157,7 +156,7 @@ rest is done using macros and composing s forms).
 #+RESULTS:
 : (6 12)
 
-***** closures
+*** closures
 - functions that return other functions as their result
   [isn't this just higher order functions, isn't the notion of a closure more involved than that
    in that the main idea is that the returned function carries a bound context with it]
@@ -180,7 +179,7 @@ rest is done using macros and composing s forms).
 - /let/ is used above to bind the function returned by greeting to the symbol /greet/, similar to
   variable declaration in imperative languages (...?)
 
-***** threading [weaving] expressions
+*** threading [weaving] expressions
 
 - clojure provides a more conveninent way to handle nested expressions so they don't become too difficult to read
 
@@ -197,15 +196,15 @@ rest is done using macros and composing s forms).
 - the /->>/ operator passes the result of each expression as the last argument of the next
 - the /->/ operator passes the result of each expression as the first argument of the next
   
-***** laziness
+*** laziness
 - clojure uses laziness quite a bit [I thought it was only in sequences...]
 
-**** code structure 
+** code structure 
 - immutability preferred, enforced for the most part
 - chain functions together (either through nesting or using /->/)
 - functions return values, do not mutate state (unless it's made explicit?)
 
-***** destructuring
+*** destructuring
 - a declarative way to access values in data structures
 
 #+begin_src clojure
@@ -272,7 +271,7 @@ rest is done using macros and composing s forms).
 #+RESULTS:
 : true
 
-***** namespaces
+*** namespaces
 - group functionality in namespaces
 
 - defining a namespaces with /(ns <name>)/ at the top of file. then go on to define functions for namespace.
@@ -313,7 +312,7 @@ rest is done using macros and composing s forms).
   (:require [ons :refer [fn1]))
 #+end_src
 
-***** dynamic variables
+*** dynamic variables
 - mechanism to declare variables that can have value changed in a defined scope
 #+begin_src clojure
 (declare ^{:dynamic true} *foo*)
@@ -342,4 +341,53 @@ rest is done using macros and composing s forms).
 - dynamic variables are discouraged, but the functionality is there and can be useful
   for dealing with filestreams, db connections... we will see..
   
-**** polymorphism
+** polymorphism
+*** multimethods
+- dispatching mechanism that uses a selector function.
+#+begin_src clojure
+(defmulti area :shape)
+
+(defmethod area :circle [{:keys [radius]}]
+  (* Math/PI radius radius))
+
+(defmethod area :rectangle [{:keys [length width]}]
+  (* length width))
+
+(defmethod area :default [shape]
+  (throw (Exception. (str "unrecognized shape: " shape))))
+  
+
+(area {:shape :circle :radius 10})
+(area {:shape :rectangle :length 4 :width 4})
+#+end_src
+
+#+RESULTS:
+: 16
+
+*** protocols
+- define abstract set of functions to be implemented by a type
+
+#+begin_src clojure
+(defprotocol Foo
+  "Foo docstring"
+  (bar [this b] "bar docstring")
+  (baz [this] [this b] "baz docstring"))
+
+(deftype Bar [data] Foo
+  (bar [this param]
+    (println data param))
+  (baz [this]
+    (println (class this)))
+  (baz [this param]
+    (println param)))
+
+(let [b (Bar. "some data")]
+  (.bar b "param")
+  (.baz b)
+  (.baz b "baz w/ a parameter"))
+
+#+end_src
+
+#+RESULTS:
+: class clojure.lang.Compiler$CompilerExceptionclass clojure.lang.Compiler$CompilerExceptionSyntax error (NullPointerException) compiling deftype* at (*cider-repl learning/learning-clojure:localhost:51231(clj)*:6:1).
+: null
