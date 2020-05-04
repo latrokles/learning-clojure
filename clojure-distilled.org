@@ -271,3 +271,75 @@ rest is done using macros and composing s forms).
 
 #+RESULTS:
 : true
+
+***** namespaces
+- group functionality in namespaces
+
+- defining a namespaces with /(ns <name>)/ at the top of file. then go on to define functions for namespace.
+- a namespace can be referenced in two different ways: /:use/ and /:require/
+  
+#+begin_src clojure
+(ns my-namespace
+  (:use another-namespace))
+#+end_src
+- brings in all the definitions from /another-namespace/ into /my-namespace/, this could cause collisions
+
+#+begin_src clojure
+(ns my-namespace
+  (:use [another-namespace :only [fun1 fun2]]))
+#+end_src
+- brings only the specified definitions from /another-namespace/ to /my-namespace/
+
+- the other approach is to use /:require/
+#+begin_src clojure
+(ns my-namespace (:require other-ns))
+
+(other-ns/fn1 ...)
+#+end_src
+- more explicit than /:use/
+- we can rename the namespace we are referencing. helpful if namespace names are too long.
+
+#+begin_src clojure
+(ns my-ns
+  (:require [other-ns :as ons]))
+
+(ons/fn1 ...)
+#+end_src
+
+- and there is still a shorthand to bring specific definitions
+#+begin_src clojure
+;; can use :all to bring everything in
+(ns my-ns
+  (:require [ons :refer [fn1]))
+#+end_src
+
+***** dynamic variables
+- mechanism to declare variables that can have value changed in a defined scope
+#+begin_src clojure
+(declare ^{:dynamic true} *foo*)
+(println *foo*)
+#+end_src
+
+#+RESULTS:
+: #object[clojure.lang.Var$Unbound 0x7fe4229b Unbound: #'user/*foo*]
+: nil
+
+- the above declares /*foo*/ as a dynamic var that is not bound to any value.
+#+begin_src clojure
+(declare ^{:dynamic true} *foo*)
+
+(defn with-foo [f]
+  (binding [*foo* "I exist"]
+    (f)))
+
+(with-foo #(println *foo*))
+#+end_src
+
+#+RESULTS:
+: I exist
+: nil
+
+- dynamic variables are discouraged, but the functionality is there and can be useful
+  for dealing with filestreams, db connections... we will see..
+  
+**** polymorphism
