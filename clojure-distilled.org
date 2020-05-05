@@ -385,9 +385,158 @@ rest is done using macros and composing s forms).
   (.bar b "param")
   (.baz b)
   (.baz b "baz w/ a parameter"))
-
 #+end_src
 
 #+RESULTS:
 : class clojure.lang.Compiler$CompilerExceptionclass clojure.lang.Compiler$CompilerExceptionSyntax error (NullPointerException) compiling deftype* at (*cider-repl learning/learning-clojure:localhost:51231(clj)*:6:1).
 : null
+
+** dealing with global state
+- clojure allows for mutable shared state via STM (software transactional memory).
+- two types of mutable types, /atom/ for uncoordinated upates and /ref/ for doing multiple updates as a transaction.
+
+#+begin_src clojure
+;; create an atom and set it to nil
+(def global-val (atom nil))
+
+;; read the value with deref
+(println "value of global-val is:" (deref global-val))
+
+;; shorthand for deref is @
+(println "value of global-val is:" @global-val)
+#+end_src
+
+#+RESULTS:
+: value of global-val is: nil
+: value of global-val is: nil
+: nil
+
+- we can set the value of an atom with /reset!/ or /swap!/
+- the ! at the end of the function is a convention to denote that these functions modify mutable data (very ruby of clojure)
+#+begin_src clojure
+;; with reset! we pass the new value
+(reset! global-val 10)
+(println @global-val)
+
+;; with swap! we provide a function that will be used to update the atom's value
+(swap! global-val inc)
+(println @global-val)
+#+end_src
+
+#+RESULTS:
+: 10
+: 11
+: nil
+
+- refs are defined in a similar fashion, but used much differently
+#+begin_src clojure
+;; define our ref
+(def names (ref []))
+
+;; open a transaction and perform multiple updates
+(dosync
+  (ref-set names ["john"])
+  (alter names #(if (not-empty %)
+                  (conj % "Jane") %)))
+
+(println names)
+#+end_src
+
+#+RESULTS:
+: #ref[{:status :ready, :val [john Jane]} 0x303ad898]
+: nil
+
+- the empty check inside the transaction above will depend on any updates up to that point within
+- the transaction. any updates outside of this transaction won't have an effect in here.
+- in a collistion, one of those transactions would be retried.
+** writing code that writes code... macros!
+- clojure has a macro system
+- code as data...
+- macros execute before evaluation
+- macros can be difficult to reason about, avoid them unless necessary
+  
+#+begin_src clojure
+(def session (atom {:user "bob"}))
+
+(defn load-content []
+  (if (:user @session)
+    "Welcome back!"
+    "please log back in!"))
+#+end_src
+
+#+RESULTS:
+: #'user/load-content
+
+or we can do this
+#+begin_src clojure
+(defmacro defprivate [name args & body]
+  `(defn ~(symbol name) ~args
+     (if (:user @session)
+       (do ~@body)
+       "please login")))
+       
+
+;; the ` passes the list as data and not executable code
+;; the ~@ notation is called unquote splicing
+(macroexpand-1 '(defprivate foo [greeting] (println greeting)))
+#+end_src
+
+#+RESULTS:
+: (clojure.core/defn
+:  foo
+:  [greeting]
+:  (if (:user @user/session) (do (println greeting)) "please login"))
+
++ found this coverage of macros too contrived for a complex subject, a simpler example could've gone a long way
+
+** the REPL (read-eval-print-loop)
+interactive development, not much about the repl here. the Rich Hickey videos cover this
+
+** calling java code
+*** importing a class
+- use /:import/
+#+begin_src clojure
+(ns my-ns
+  (:import java.io.File))
+#+end_src
+
+or
+
+#+begin_src clojure
+(ns my-ns
+  (:import [java.io File FileInputStream FileOutputStream]))
+#+end_src
+
+*** instatiate a class
+#+begin_src clojure
+(new File ".")
+
+;; or the shorthand
+(File. ".")
+#+end_src
+
+*** calling methods
+#+begin_src clojure
+
+;; the . preceding the method name and then the instance after
+(let [f (File. ".")]
+  (println (.getAbsolutePath f)))
+  
+;; for static methods
+(str File/separator "foo" File/separator "bar")
+
+;; or
+(Math/sqrt 256)
+#+end_src
+
+#+RESULTS:
+: /Users/latrokles/src/github.com/latrokles/learning/learning-clojure/.
+: 16.0
+
+- and, oh surprise, there is a shorthand for chaining methods
+#+begin_src clojure
+(.getBytes (.getAbsolutepath (File. ".")))
+
+;; can be re-written as
+(.. (File. ".") getAbsolutepath getBytes)
+#+end_src
