@@ -1,0 +1,13 @@
+#+STARTUP: indent
+
+:PROPERTIES:
+:header-args: clojure :results output value pp
+:END:
+* clojure crash course 
+
+** forms
+operations/functions take the following form and use prefix notation
+#+begin_src clojure
+(operator operand1 operand2 ... )
+#+end_src
+
