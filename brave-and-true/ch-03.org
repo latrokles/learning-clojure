@@ -1,13 +1,83 @@
 #+STARTUP: indent
 
+* clojure crash course
 :PROPERTIES:
 :header-args: clojure :results output value pp
 :END:
-* clojure crash course 
 
-** forms
+** syntax
+
+*** forms
 operations/functions take the following form and use prefix notation
 #+begin_src clojure
 (operator operand1 operand2 ... )
 #+end_src
 
+*** control flow
+**** if
+#+begin_src clojure
+(if boolean-form
+  then-form
+  else-form)
+
+;; or
+(if boolean-form
+  then-form)
+;; else it will return nil
+#+end_src
+
+**** do
+wrap multiple forms in parens and run them
+#+begin_src clojure
+(if true
+  (do (println "success!")
+      "yes!")
+  (do (println "failure!")
+      (println "aaaah")
+      "noo"))
+#+end_src
+
+#+RESULTS:
+: yes!
+
+**** when
+/if/ + /do/ - /else/
+#+begin_src clojure
+(when true
+  (println "yeah")
+  "done!")
+#+end_src
+
+#+RESULTS:
+: done!
+
+**** nil, true, false, truthiness, equality, and boolean expressions
+- true
+- false
+- nil
+- nil is falsey
+- /nil?/ nil check
+#+begin_src clojure
+(if []
+  "empty list is truthy"
+  "empty list is falsey")
+#+end_src
+
+#+RESULTS:
+: empty list is truthy
+
+*** naming values with def
+use def to bind values to names
+#+begin_src clojure
+(def cool-route "dreamcatcher")
+cool-route
+#+end_src
+
+#+RESULTS:
+: "dreamcatcher"
+
+** data structures
+
+** functions
+** putting it all together
+** exercises
